@@ -4,9 +4,13 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 data class YouTubeResponse(val items: List<VideoItem>?)
-data class VideoItem(val id: Id?, val snippet: Snippet?)
-data class Id(val playlistId: String?)
-data class Snippet(val title: String?, val description: String?)
+data class VideoItem(val id: PlaylistId?, val snippet: Snippet?) {
+    // Handle case where API returns string ID (like in channel playlists endpoint)
+    val actualPlaylistId: String?
+        get() = id?.playlistId ?: stringId
+}
+data class PlaylistId(val playlistId: String?)
+data class Snippet(val title: String?, val description: String?, val channelTitle: String?)
 
 interface YouTubeApi {
     @GET("search")
@@ -15,6 +19,14 @@ interface YouTubeApi {
         @Query("type") type: String = "playlist",
         @Query("q") query: String,
         @Query("key") apiKey: String,
-        @Query("maxResults") maxResults: Int = 15
+        @Query("maxResults") maxResults: Int = 20
+    ): YouTubeResponse
+
+    @GET("playlists")
+    suspend fun getChannelPlaylists(
+        @Query("part") part: String = "snippet",
+        @Query("channelId") channelId: String,
+        @Query("key") apiKey: String,
+        @Query("maxResults") maxResults: Int = 20
     ): YouTubeResponse
 }

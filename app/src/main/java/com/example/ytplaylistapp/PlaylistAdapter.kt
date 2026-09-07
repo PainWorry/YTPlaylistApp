@@ -26,9 +26,12 @@ class PlaylistAdapter(
         val item = playlists[position]
         holder.tvTitle.text = item.snippet?.title ?: "Untitled Playlist"
         holder.tvDescription.text = item.snippet?.description ?: ""
+        
         holder.itemView.setOnClickListener {
-            item.id?.playlistId?.let { playlistId ->
-                onClick(playlistId)
+            // Support both search results and direct playlist ID objects
+            val pId = item.actualPlaylistId ?: (item.id as? Any)?.toString()
+            if (!pId.isNullOrEmpty()) {
+                onClick(pId)
             }
         }
     }
