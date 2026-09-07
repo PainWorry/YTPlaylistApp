@@ -5,9 +5,8 @@ import retrofit2.http.Query
 
 data class YouTubeResponse(val items: List<VideoItem>?)
 data class VideoItem(val id: PlaylistId?, val snippet: Snippet?) {
-    // Handle case where API returns string ID (like in channel playlists endpoint)
     val actualPlaylistId: String?
-        get() = id?.playlistId ?: stringId
+        get() = id?.playlistId
 }
 data class PlaylistId(val playlistId: String?)
 data class Snippet(val title: String?, val description: String?, val channelTitle: String?)
