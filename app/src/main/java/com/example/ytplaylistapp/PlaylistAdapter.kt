@@ -28,9 +28,8 @@ class PlaylistAdapter(
         holder.tvDescription.text = item.snippet?.description ?: ""
         
         holder.itemView.setOnClickListener {
-            val pId = item.actualPlaylistId
-            if (!pId.isNullOrEmpty()) {
-                onClick(pId)
+            item.id?.let { playlistId ->
+                onClick(playlistId)
             }
         }
     }
