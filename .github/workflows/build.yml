@@ -19,17 +19,8 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Download and Setup Gradle
-      run: |
-        wget https://services.gradle.org/distributions/gradle-8.4-bin.zip
-        unzip -q gradle-8.4-bin.zip
-        echo "$PWD/gradle-8.4/bin" >> $GITHUB_PATH
+    - name: Validate Gradle Wrapper
+      uses: gradle/actions/setup-gradle@v3
 
-    - name: Build Debug APK
-      run: gradle assembleDebug --stacktrace
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+    - name: Build Debug APK with Info
+      run: ./gradlew assembleDebug --info || gradle assembleDebug --info
