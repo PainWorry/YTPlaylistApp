@@ -60,8 +60,9 @@ class MainActivity : AppCompatActivity() {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val response = api.searchPlaylists(query = query, apiKey = apiKey)
+                        val items = response.items ?: emptyList()
                         withContext(Dispatchers.Main) {
-                            rvPlaylists.adapter = PlaylistAdapter(response.items) { playlistId ->
+                            rvPlaylists.adapter = PlaylistAdapter(items) { playlistId ->
                                 val html = "<body style=\"margin:0;padding:0;background-color:black;\"><iframe width=\"100%\" height=\"100%\" src=\"https://www.youtube.com/embed?listType=playlist&list=$playlistId\" frameborder=\"0\" allowfullscreen></iframe></body>"
                                 webView.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "UTF-8", null)
                             }
