@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -19,12 +22,15 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : AppCompatActivity() {
 
+    private var allPlaylists: List<VideoItem> = emptyList()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         val etOAuthToken = findViewById<EditText>(R.id.etOAuthToken)
         val btnLoadMyPlaylists = findViewById<Button>(R.id.btnLoadMyPlaylists)
+        val etFilter = findViewById<EditText>(R.id.etFilter)
         val rvPlaylists = findViewById<RecyclerView>(R.id.rvPlaylists)
 
         val sharedPrefs = getPreferences(Context.MODE_PRIVATE)
@@ -55,25 +61,48 @@ class MainActivity : AppCompatActivity() {
                 try {
                     val authHeader = "Bearer $token"
                     val response = api.getMyPlaylists(authHeader = authHeader)
-                    val items = response.items ?: emptyList()
+                    allPlaylists = response.items ?: emptyList()
                     
                     withContext(Dispatchers.Main) {
-                        if (items.isEmpty()) {
-                            Toast.makeText(this@MainActivity, "No playlists found or token expired.", Toast.LENGTH_LONG).show()
+                        if (allPlaylists.isEmpty()) {
+                            Toast.makeText(this@MainActivity, "No playlists found in your account.", Toast.LENGTH_LONG).show()
+                            etFilter.visibility = View.GONE
                         } else {
-                            Toast.makeText(this@MainActivity, "Loaded ${items.size} playlists from your account!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@MainActivity, "Loaded ${allPlaylists.size} playlists!", Toast.LENGTH_SHORT).show()
+                            etFilter.visibility = View.VISIBLE
                         }
                         
-                        rvPlaylists.adapter = PlaylistAdapter(items) { playlistId ->
-                            openYouTubeMusic(playlistId)
-                        }
+                        updateList(allPlaylists, rvPlaylists)
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@MainActivity, "Auth Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@MainActivity, "Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                     }
                 }
             }
+        }
+
+        etFilter.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count) {
+                val query = s.toString().lowercase().trim()
+                val filtered = if (query.isEmpty()) {
+                    allPlaylists
+                } else {
+                    allPlaylists.filter { 
+                        it.snippet?.title?.lowercase()?.contains(query) == true ||
+                        it.snippet?.description?.lowercase()?.contains(query) == true
+                    }
+                }
+                updateList(filtered, rvPlaylists)
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+    }
+
+    private fun updateList(items: List<VideoItem>, rv: RecyclerView) {
+        rv.adapter = PlaylistAdapter(items) { playlistId ->
+            openYouTubeMusic(playlistId)
         }
     }
 
@@ -83,7 +112,6 @@ class MainActivity : AppCompatActivity() {
         try {
             startActivity(intent)
         } catch (e: Exception) {
-            // Fallback if YouTube Music app is not installed
             intent.setPackage(null)
             startActivity(intent)
         }

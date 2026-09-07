@@ -19,7 +19,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Load My Account Playlists"
-        android:layout_marginBottom="12dp"/>
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/etFilter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Search loaded playlists..."
+        android:textSize="14sp"
+        android:visibility="gone"
+        android:layout_marginBottom="8dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvPlaylists"
