@@ -83,15 +83,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         etFilter.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count) {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val query = s.toString().lowercase().trim()
                 val filtered = if (query.isEmpty()) {
                     allPlaylists
                 } else {
-                    allPlaylists.filter { 
-                        it.snippet?.title?.lowercase()?.contains(query) == true ||
-                        it.snippet?.description?.lowercase()?.contains(query) == true
+                    allPlaylists.filter { item: VideoItem ->
+                        val titleMatch = item.snippet?.title?.lowercase()?.contains(query) == true
+                        val descMatch = item.snippet?.description?.lowercase()?.contains(query) == true
+                        titleMatch || descMatch
                     }
                 }
                 updateList(filtered, rvPlaylists)
