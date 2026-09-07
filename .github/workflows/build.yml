@@ -24,8 +24,8 @@ jobs:
       with:
         gradle-version: '8.5'
 
-    - name: Build Debug APK with Stacktrace
-      run: gradle assembleDebug --stacktrace
+    - name: Build Debug APK with Info Logs
+      run: gradle assembleDebug --info
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
