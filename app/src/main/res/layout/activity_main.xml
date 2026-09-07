@@ -3,51 +3,23 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="16dp">
 
     <EditText
-        android:id="@+id/etApiKey"
+        android:id="@+id/etOAuthToken"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter YouTube API Key"
+        android:hint="Enter Google OAuth 2.0 Access Token"
         android:inputType="textPassword"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        android:layout_marginBottom="8dp"/>
 
-    <EditText
-        android:id="@+id/etQuery"
+    <Button
+        android:id="@+id/btnLoadMyPlaylists"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Search Term OR YouTube Channel ID"
-        android:textSize="14sp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="8dp">
-
-        <Button
-            android:id="@+id/btnSearch"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Search Public" />
-
-        <Button
-            android:id="@+id/btnChannel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Load Channel Playlists"
-            android:layout_marginStart="8dp" />
-    </LinearLayout>
-
-    <WebView
-        android:id="@+id/webViewPlayer"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:layout_marginBottom="8dp"
-        android:background="#000000" />
+        android:text="Load My Account Playlists"
+        android:layout_marginBottom="12dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvPlaylists"

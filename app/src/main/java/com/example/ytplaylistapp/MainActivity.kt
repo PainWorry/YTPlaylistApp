@@ -1,10 +1,9 @@
 package com.example.ytplaylistapp
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
-import android.webkit.WebChromeClient
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -24,23 +23,15 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val etApiKey = findViewById<EditText>(R.id.etApiKey)
-        val etQuery = findViewById<EditText>(R.id.etQuery)
-        val btnSearch = findViewById<Button>(R.id.btnSearch)
-        val btnChannel = findViewById<Button>(R.id.btnChannel)
+        val etOAuthToken = findViewById<EditText>(R.id.etOAuthToken)
+        val btnLoadMyPlaylists = findViewById<Button>(R.id.btnLoadMyPlaylists)
         val rvPlaylists = findViewById<RecyclerView>(R.id.rvPlaylists)
-        val webView = findViewById<WebView>(R.id.webViewPlayer)
 
         val sharedPrefs = getPreferences(Context.MODE_PRIVATE)
-        val savedKey = sharedPrefs.getString("API_KEY", "")
-        if (!savedKey.isNullOrEmpty()) {
-            etApiKey.setText(savedKey)
+        val savedToken = sharedPrefs.getString("OAUTH_TOKEN", "")
+        if (!savedToken.isNullOrEmpty()) {
+            etOAuthToken.setText(savedToken)
         }
-
-        webView.settings.javaScriptEnabled = true
-        webView.settings.domStorageEnabled = true
-        webView.webChromeClient = WebChromeClient()
-        webView.webViewClient = WebViewClient()
 
         rvPlaylists.layoutManager = LinearLayoutManager(this)
 
@@ -50,82 +41,51 @@ class MainActivity : AppCompatActivity() {
             .build()
         val api = retrofit.create(YouTubeApi::class.java)
 
-        fun validateAndSaveKey(): String? {
-            val key = etApiKey.text.toString().trim()
-            if (key.isEmpty()) {
-                Toast.makeText(this, "Please enter your YouTube API Key", Toast.LENGTH_SHORT).show()
-                return null
-            }
-            sharedPrefs.edit().putString("API_KEY", key).apply()
-            return key
-        }
-
-        btnSearch.setOnClickListener {
-            val apiKey = validateAndSaveKey() ?: return@setOnClickListener
-            val query = etQuery.text.toString().trim()
-            if (query.isEmpty()) {
-                Toast.makeText(this, "Enter a search keyword", Toast.LENGTH_SHORT).show()
+        btnLoadMyPlaylists.setOnClickListener {
+            val token = etOAuthToken.text.toString().trim()
+            if (token.isEmpty()) {
+                Toast.makeText(this, "Please enter your OAuth Access Token", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            Toast.makeText(this, "Searching public playlists...", Toast.LENGTH_SHORT).show()
+            sharedPrefs.edit().putString("OAUTH_TOKEN", token).apply()
+            Toast.makeText(this, "Fetching your account playlists...", Toast.LENGTH_SHORT).show()
+
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val response = api.searchPlaylists(query = query, apiKey = apiKey)
+                    val authHeader = "Bearer $token"
+                    val response = api.getMyPlaylists(authHeader = authHeader)
                     val items = response.items ?: emptyList()
+                    
                     withContext(Dispatchers.Main) {
                         if (items.isEmpty()) {
-                            Toast.makeText(this@MainActivity, "API Key works, but no playlists found.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this@MainActivity, "No playlists found or token expired.", Toast.LENGTH_LONG).show()
                         } else {
-                            Toast.makeText(this@MainActivity, "API Key is valid! Found ${items.size} playlists.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@MainActivity, "Loaded ${items.size} playlists from your account!", Toast.LENGTH_SHORT).show()
                         }
+                        
                         rvPlaylists.adapter = PlaylistAdapter(items) { playlistId ->
-                            loadPlayer(webView, playlistId)
+                            openYouTubeMusic(playlistId)
                         }
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@MainActivity, "API Error (Check Key): ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                    }
-                }
-            }
-        }
-
-        btnChannel.setOnClickListener {
-            val apiKey = validateAndSaveKey() ?: return@setOnClickListener
-            val channelId = etQuery.text.toString().trim()
-            if (channelId.isEmpty()) {
-                Toast.makeText(this, "Enter your YouTube Channel ID", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            Toast.makeText(this, "Fetching channel playlists...", Toast.LENGTH_SHORT).show()
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    val response = api.getChannelPlaylists(channelId = channelId, apiKey = apiKey)
-                    val items = response.items ?: emptyList()
-                    withContext(Dispatchers.Main) {
-                        if (items.isEmpty()) {
-                            Toast.makeText(this@MainActivity, "No playlists found for this Channel ID.", Toast.LENGTH_LONG).show()
-                        } else {
-                            Toast.makeText(this@MainActivity, "Loaded ${items.size} channel playlists!", Toast.LENGTH_SHORT).show()
-                        }
-                        rvPlaylists.adapter = PlaylistAdapter(items) { playlistId ->
-                            loadPlayer(webView, playlistId)
-                        }
-                    }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@MainActivity, "Error (Check Channel ID/Key): ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@MainActivity, "Auth Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                     }
                 }
             }
         }
     }
 
-    private fun loadPlayer(webView: WebView, playlistId: String) {
-        val html = "<body style=\"margin:0;padding:0;background-color:black;\"><iframe width=\"100%\" height=\"100%\" src=\"https://www.youtube.com/embed?listType=playlist&list=$playlistId\" frameborder=\"0\" allowfullscreen></iframe></body>"
-        webView.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "UTF-8", null)
-        Toast.makeText(this, "Loading playlist in player...", Toast.LENGTH_SHORT).show()
+    private fun openYouTubeMusic(playlistId: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://music.youtube.com/playlist?list=$playlistId"))
+        intent.setPackage("com.google.android.apps.youtube.music")
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            // Fallback if YouTube Music app is not installed
+            intent.setPackage(null)
+            startActivity(intent)
+        }
     }
 }
