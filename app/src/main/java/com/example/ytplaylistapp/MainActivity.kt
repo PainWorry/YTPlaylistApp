@@ -37,7 +37,6 @@ class MainActivity : AppCompatActivity() {
             etApiKey.setText(savedKey)
         }
 
-        // Configure WebView for embedded playback and interaction
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.webChromeClient = WebChromeClient()
@@ -54,7 +53,6 @@ class MainActivity : AppCompatActivity() {
         fun validateAndSaveKey(): String? {
             val key = etApiKey.text.toString().trim()
             if (key.isEmpty()) {
-                Toast.On("Please enter your YouTube API Key", Toast.LENGTH_SHORT).show() // fixed syntax below
                 Toast.makeText(this, "Please enter your YouTube API Key", Toast.LENGTH_SHORT).show()
                 return null
             }
